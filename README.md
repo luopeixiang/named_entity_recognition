@@ -53,7 +53,7 @@ python3 main.py
 
 
 
-下面是这些模型的简单介绍：
+下面是这些模型的简单介绍（github网页对数学公式的支持不太好，涉及公式的部分无法正常显示，可以查看`README.pdf`）：
 
 ## 隐马尔可夫模型（Hidden Markov Model，HMM）	 
 
@@ -117,7 +117,7 @@ HMM模型的训练过程对应隐马尔可夫模型的学习问题（李航 统�
 
 
 
-![biLSTM_NER](/home/luo/Github_Project/named_entity_recognition/imgs/biLSTM_NER.png)
+![biLSTM_NER](./imgs/biLSTM_NER.png)
 
 
 
