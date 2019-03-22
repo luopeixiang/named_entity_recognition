@@ -175,7 +175,9 @@ class BiLSTM_CRF(nn.Module):
         self.bilstm = BiLSTM(vocab_size, emb_size, hidden_size, out_size)
 
         # CRF实际上就是多学习一个转移矩阵 [out_size, out_size] 初始化为均匀分布
-        self.transition = nn.Parameter(torch.zeros(out_size, out_size))
+        self.transition = nn.Parameter(
+            torch.ones(out_size, out_size) * 1/out_size)
+        # self.transition.data.zero_()
 
     def forward(self, sents_tensor, lengths):
         # [B, L, out_size]
@@ -185,9 +187,8 @@ class BiLSTM_CRF(nn.Module):
         # 也就是每个字对应对应一个 [out_size, out_size]的矩阵
         # 这个矩阵第i行第j列的元素的含义是：上一时刻tag为i，这一时刻tag为j的分数
         batch_size, max_len, out_size = emission.size()
-        crf_scores = emission.view(
-            batch_size, max_len, 1, out_size
-        ).expand(-1, -1, out_size, -1) + self.transition.unsqueeze(0)
+        crf_scores = emission.unsqueeze(
+            2).expand(-1, -1, out_size, -1) + self.transition.unsqueeze(0)
 
         return crf_scores
 
