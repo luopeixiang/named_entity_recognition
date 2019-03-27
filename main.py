@@ -1,7 +1,8 @@
 
 from data import build_corpus
 from utils import extend_maps, prepocess_data_for_lstmcrf
-from evaluate import hmm_train_eval, crf_train_eval, bilstm_train_and_eval
+from evaluate import hmm_train_eval, crf_train_eval, \
+    bilstm_train_and_eval, ensemble_evaluate
 
 
 def main():
@@ -16,7 +17,7 @@ def main():
 
     # 训练评估ｈｍｍ模型
     print("正在训练评估HMM模型...")
-    hmm_train_eval(
+    hmm_pred = hmm_train_eval(
         (train_word_lists, train_tag_lists),
         (test_word_lists, test_tag_lists),
         word2id,
@@ -25,7 +26,7 @@ def main():
 
     # 训练评估CRF模型
     print("正在训练评估CRF模型...")
-    crf_train_eval(
+    crf_pred = crf_train_eval(
         (train_word_lists, train_tag_lists),
         (test_word_lists, test_tag_lists)
     )
@@ -34,7 +35,7 @@ def main():
     print("正在训练评估双向LSTM模型...")
     # LSTM模型训练的时候需要在word2id和tag2id加入PAD和UNK
     bilstm_word2id, bilstm_tag2id = extend_maps(word2id, tag2id, for_crf=False)
-    bilstm_train_and_eval(
+    lstm_pred = bilstm_train_and_eval(
         (train_word_lists, train_tag_lists),
         (dev_word_lists, dev_tag_lists),
         (test_word_lists, test_tag_lists),
@@ -55,11 +56,16 @@ def main():
     test_word_lists, test_tag_lists = prepocess_data_for_lstmcrf(
         test_word_lists, test_tag_lists, test=True
     )
-    bilstm_train_and_eval(
+    lstmcrf_pred = bilstm_train_and_eval(
         (train_word_lists, train_tag_lists),
         (dev_word_lists, dev_tag_lists),
         (test_word_lists, test_tag_lists),
         crf_word2id, crf_tag2id
+    )
+
+    ensemble_evaluate(
+        [hmm_pred, crf_pred, lstm_pred, lstmcrf_pred],
+        test_tag_lists
     )
 
 

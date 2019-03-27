@@ -47,3 +47,10 @@ def prepocess_data_for_lstmcrf(word_lists, tag_lists, test=False):
             tag_lists[i].append("<end>")
 
     return word_lists, tag_lists
+
+
+def flatten_lists(lists):
+    flatten_list = []
+    for l in lists:
+        flatten_list += l
+    return flatten_list

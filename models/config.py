@@ -5,8 +5,6 @@ class TrainingConfig(object):
     lr = 0.001
     epoches = 30
     print_step = 5
-    # 保存模型的的文件名
-    save_file = "./ckpts/bilstm.pkl"
 
 
 class LSTMConfig(object):

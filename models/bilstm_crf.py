@@ -39,7 +39,6 @@ class BILSTM_Model(object):
         self.print_step = TrainingConfig.print_step
         self.lr = TrainingConfig.lr
         self.batch_size = TrainingConfig.batch_size
-        self.save_file = TrainingConfig.save_file
 
         # 初始化优化器
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
@@ -53,8 +52,8 @@ class BILSTM_Model(object):
               dev_word_lists, dev_tag_lists,
               word2id, tag2id):
         # 对数据集按照长度进行排序
-        word_lists, tag_lists = sort_by_lengths(word_lists, tag_lists)
-        dev_word_lists, dev_tag_lists = sort_by_lengths(
+        word_lists, tag_lists, _ = sort_by_lengths(word_lists, tag_lists)
+        dev_word_lists, dev_tag_lists, _ = sort_by_lengths(
             dev_word_lists, dev_tag_lists)
 
         B = self.batch_size
@@ -129,7 +128,6 @@ class BILSTM_Model(object):
 
             if val_loss < self._best_val_loss:
                 print("保存模型...")
-                torch.save(self.model, self.save_file)
                 self.best_model = self.model
                 self._best_val_loss = val_loss
 
@@ -138,7 +136,7 @@ class BILSTM_Model(object):
     def test(self, word_lists, tag_lists, word2id, tag2id):
         """返回最佳模型在测试集上的预测结果"""
         # 准备数据
-        word_lists, tag_lists = sort_by_lengths(word_lists, tag_lists)
+        word_lists, tag_lists, indices = sort_by_lengths(word_lists, tag_lists)
         tensorized_sents, lengths = tensorized(word_lists, word2id)
         tensorized_sents = tensorized_sents.to(self.device)
 
@@ -159,6 +157,15 @@ class BILSTM_Model(object):
                 for j in range(lengths[i]):
                     tag_list.append(id2tag[ids[j].item()])
             pred_tag_lists.append(tag_list)
+
+        # indices存有根据长度排序后的索引映射的信息
+        # 比如若indices = [1, 2, 0] 则说明原先索引为1的元素映射到的新的索引是0，
+        # 索引为2的元素映射到新的索引是1...
+        # 下面根据indices将pred_tag_lists和tag_lists转化为原来的顺序
+        ind_maps = sorted(list(enumerate(indices)), key=lambda e: e[1])
+        indices, _ = list(zip(*ind_maps))
+        pred_tag_lists = [pred_tag_lists[i] for i in indices]
+        tag_lists = [tag_lists[i] for i in indices]
 
         return pred_tag_lists, tag_lists
 
@@ -207,14 +214,15 @@ class BiLSTM_CRF(nn.Module):
         viterbi = torch.zeros(B, L, T).to(device)
         # backpointer[i, j, k]表示第i个句子，第j个字对应第k个标记时前一个标记的id，用于回溯
         backpointer = (torch.zeros(B, L, T).long() * end_id).to(device)
+        lengths = torch.LongTensor(lengths).to(device)
         # 向前递推
         for step in range(L):
-            batch_size_t = sum(l > step for l in lengths)
+            batch_size_t = (lengths > step).sum().item()
             if step == 0:
                 # 第一个字它的前一个标记只能是start_id
                 viterbi[:batch_size_t, step,
-                        :] = crf_scores[:batch_size_t, step, start_id, :]
-                backpointer[:batch_size_t, step, :] = start_id
+                        :] = crf_scores[: batch_size_t, step, start_id, :]
+                backpointer[: batch_size_t, step, :] = start_id
             else:
                 max_scores, prev_tags = torch.max(
                     viterbi[:batch_size_t, step-1, :].unsqueeze(2) +
@@ -226,7 +234,6 @@ class BiLSTM_CRF(nn.Module):
 
         # 在回溯的时候我们只需要用到backpointer矩阵
         backpointer = backpointer.view(B, -1)  # [B, L * T]
-        lengths = torch.Tensor(lengths)
         tagids = []  # 存放结果
         tags_t = None
         for step in range(L-1, 0, -1):
@@ -248,8 +255,6 @@ class BiLSTM_CRF(nn.Module):
                 index = index.to(device)
                 index += offset.long()
 
-            # import pdb
-            # pdb.set_trace()
             try:
                 tags_t = backpointer[:batch_size_t].gather(
                     dim=1, index=index.unsqueeze(1).long())

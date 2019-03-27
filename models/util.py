@@ -44,16 +44,21 @@ def tensorized(batch, maps):
             batch_tensor[i][j] = maps.get(e, UNK)
     # batch各个元素的长度
     lengths = [len(l) for l in batch]
+
     return batch_tensor, lengths
 
 
 def sort_by_lengths(word_lists, tag_lists):
     pairs = list(zip(word_lists, tag_lists))
-    pairs.sort(key=lambda pair: len(pair[0]), reverse=True)
+    indices = sorted(range(len(pairs)),
+                     key=lambda k: len(pairs[k][0]),
+                     reverse=True)
+    pairs = [pairs[i] for i in indices]
+    # pairs.sort(key=lambda pair: len(pair[0]), reverse=True)
 
     word_lists, tag_lists = list(zip(*pairs))
 
-    return word_lists, tag_lists
+    return word_lists, tag_lists, indices
 
 
 def cal_loss(logits, targets, tag2id):
@@ -144,12 +149,7 @@ def cal_lstm_crf_loss(crf_scores, targets, tag2id):
     all_path_scores = scores_upto_t[:, end_id].sum()
 
     # 训练大约两个epoch loss变成负数，从数学的角度上来说，loss = -logP
-    # 其中 0 < P < 1,所以loss > 0，所以这里面还有bug.....
     loss = (all_path_scores - golden_scores) / batch_size
-    if loss.item() < 0:
-        import pdb
-        pdb.set_trace()
-
     return loss
 
 
