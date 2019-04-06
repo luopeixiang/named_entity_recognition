@@ -52,5 +52,8 @@ def prepocess_data_for_lstmcrf(word_lists, tag_lists, test=False):
 def flatten_lists(lists):
     flatten_list = []
     for l in lists:
-        flatten_list += l
+        if type(l) == list:
+            flatten_list += l
+        else:
+            flatten_list.append(l)
     return flatten_list

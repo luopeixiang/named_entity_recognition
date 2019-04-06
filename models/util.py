@@ -1,6 +1,5 @@
 import torch
 import torch.nn.functional as F
-from torch.nn.utils.rnn import pack_padded_sequence
 
 # ******** CRF 工具函数*************
 
