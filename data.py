@@ -1,4 +1,5 @@
 from os.path import join
+from codecs import open
 
 
 def build_corpus(split, make_vocab=True, data_dir="./ResumeNER"):
@@ -7,7 +8,7 @@ def build_corpus(split, make_vocab=True, data_dir="./ResumeNER"):
 
     word_lists = []
     tag_lists = []
-    with open(join(data_dir, split+".char.bmes"), 'r') as f:
+    with open(join(data_dir, split+".char.bmes"), 'r', encoding='utf-8') as f:
         word_list = []
         tag_list = []
         for line in f:
