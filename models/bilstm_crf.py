@@ -1,4 +1,5 @@
 from itertools import zip_longest
+from copy import deepcopy
 
 import torch
 import torch.nn as nn
@@ -128,7 +129,7 @@ class BILSTM_Model(object):
 
             if val_loss < self._best_val_loss:
                 print("保存模型...")
-                self.best_model = self.model
+                self.best_model = deepcopy(self.model)
                 self._best_val_loss = val_loss
 
             return val_loss
