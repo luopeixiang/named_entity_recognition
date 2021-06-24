@@ -1,0 +1,15 @@
+秦	O	X
+虎	O	X
+,	O	X
+男	B_实体_gender	X
+,	O	X
+1	B_实体_birth	X
+9	I_实体_birth	X
+8	I_实体_birth	X
+6	I_实体_birth	X
+年	I_实体_birth	X
+7	I_实体_birth	X
+月	I_实体_birth	X
+出	O	X
+生	O	X
+。	O	X
